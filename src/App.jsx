@@ -11,15 +11,38 @@ function App() {
   const [showDetails, setShowDetails] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [activeMenu, setActiveMenu] = useState('domain'); // 'domain' 或 'group'
-  const [expandedSection, setExpandedSection] = useState(null);
+  const [expandedSectionDomain, setExpandedSectionDomain] = useState(null);
+  const [expandedSectionGroup, setExpandedSectionGroup] = useState(null);
 
   const formatList = (list) => {
     return list.replace("（", '<br/>（ ');
   }
 
+  const setExpandedSection = (menuType, sections) => {
+    if (menuType === 'domain') {
+      if (sections.length === 0) {
+        setExpandedSectionDomain(null);
+      } else      if (sections.length  == 1) {
+        setExpandedSectionDomain(sections[0]);
+      } else if (sections.length > 1) {
+        const section = sections.filter(section => section !== expandedSectionDomain)[0];
+        setExpandedSectionDomain(section);
+      }
+    } else if (menuType === 'group') {
+      if (sections.length === 0) {
+        setExpandedSectionGroup(null);
+      } else if (sections.length  == 1) {
+        setExpandedSectionGroup(sections[0]);
+      } else if (sections.length > 1) {
+        const section = sections.filter(section => section !== expandedSectionGroup)[0];
+        setExpandedSectionGroup(section);
+      }
+    }
+  }
+
   useEffect(() => {
     // 读取processes.json文件
-    fetch('/processes.json')
+    fetch('./processes.json')
       .then(response => response.json())
       .then(data => {
         setProcesses(data);
@@ -48,7 +71,8 @@ function App() {
           const process = data[new Date().getTime() % data.length];
           setSelectedProcess(process);
           // 默认展开第一个过程所在的分组
-          setExpandedSection(process.domain);
+          setExpandedSectionDomain(process.domain);
+          setExpandedSectionGroup(process.group);
         }
       });
   }, []);
@@ -60,7 +84,8 @@ function App() {
       const randomProcess = processes[randomIndex];
       setSelectedProcess(randomProcess);
       // 展开随机过程所在的分组
-      setExpandedSection(activeMenu === 'domain' ? randomProcess.domain : randomProcess.group);
+      setExpandedSectionDomain( randomProcess.domain);
+      setExpandedSectionGroup(randomProcess.group);
       // 在移动端，选择过程后自动隐藏菜单
       if (window.innerWidth <= 768) {
         setShowMenu(false);
@@ -72,7 +97,8 @@ function App() {
   const handleSelectProcess = (process) => {
     setSelectedProcess(process);
     // 展开选择过程所在的分组
-    setExpandedSection(activeMenu === 'domain' ? process.domain : process.group);
+    setExpandedSectionDomain(process.domain);
+    setExpandedSectionGroup(process.group);
     // 在移动端，选择过程后自动隐藏菜单
     if (window.innerWidth <= 768) {
       setShowMenu(false);
@@ -89,7 +115,8 @@ function App() {
     setActiveMenu(menuType);
     // 切换菜单类型时，展开当前选中过程所在的分组
     if (selectedProcess) {
-      setExpandedSection(menuType === 'domain' ? selectedProcess.domain : selectedProcess.group);
+      setExpandedSectionDomain( selectedProcess.domain);
+      setExpandedSectionGroup(selectedProcess.group);
     }
   };
 
@@ -149,8 +176,8 @@ function App() {
             <div className="menu-content">
               <Menu
                 mode="inline"
-                defaultOpenKeys={[expandedSection]}
-                onOpenChange={(keys) => setExpandedSection(keys[0])}
+                defaultOpenKeys={[expandedSectionDomain]}
+                onOpenChange={(keys) => setExpandedSection('domain', keys)}
                 items={Object.entries(groupedByDomain).map(([domain, domainProcesses]) => ({
                   key: domain,
                   label: domain,
@@ -168,8 +195,8 @@ function App() {
             <div className="menu-content">
               <Menu
                 mode="inline"
-                defaultOpenKeys={[expandedSection]}
-                onOpenChange={(keys) => setExpandedSection(keys[0])}
+                defaultOpenKeys={[expandedSectionGroup]}
+                onOpenChange={(keys) => setExpandedSection('group', keys)}
                 items={Object.entries(groupedByGroup).map(([group, groupProcesses]) => ({
                   key: group,
                   label: group,
@@ -190,7 +217,7 @@ function App() {
               header: {fontSize: '1rem'},
               body: {padding: 0}}} >
                 <div slot="header">
-                  <span style={{fontSize: '1rem'}}>{selectedProcess.process}</span>
+                  <span style={{fontSize: '0.6rem'}}>{selectedProcess.process}</span>
                   <span style={{float:'right'}}><Switch 
                     checked={showDetails} 
                     onChange={(checked) => setShowDetails(checked)}
@@ -221,14 +248,22 @@ function App() {
                         <th colSpan="2">定义</th>
                       </tr>
                       <tr>
-                        <td colSpan="2">{selectedProcess.definition}</td>
+                        <td colSpan="2" style={{textIndent: '2em'}}>{selectedProcess.definition}</td>
                       </tr>
-                      <tr>
-                        <th colSpan="2">作用</th>
-                      </tr>
-                      <tr>
-                        <td colSpan="2">{selectedProcess.effect}</td>
-                      </tr>
+                      {selectedProcess.effects && (
+                        <>
+                          <tr>
+                            <th colSpan="2">作用</th>
+                          </tr>
+                          <tr>
+                            <td colSpan="2">
+                              <ul>
+                                {selectedProcess.effects.map((effect) => <li key={effect} dangerouslySetInnerHTML={{__html: formatList(effect)}}></li>)}
+                              </ul>
+                            </td>
+                          </tr>
+                        </>
+                      )}
                       {selectedProcess.inputs && (
                         <>
                           <tr>
