@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Menu, Button, Switch, Form, Card, Space, Divider, Tabs, Drawer } from 'antd'
 import { MenuOutlined } from '@ant-design/icons'
 import './App.css'
@@ -11,32 +11,21 @@ function App() {
   const [showDetails, setShowDetails] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [activeMenu, setActiveMenu] = useState('domain'); // 'domain' 或 'group'
-  const [expandedSectionDomain, setExpandedSectionDomain] = useState(null);
-  const [expandedSectionGroup, setExpandedSectionGroup] = useState(null);
+  const [userExpandedDomain, setUserExpandedDomain] = useState(null);
+  const [userExpandedGroup, setUserExpandedGroup] = useState(null);
 
   const formatList = (list) => {
     return list.replace("（", '<br/>（ ');
   }
 
+  // 处理菜单展开/收起事件，确保每次只打开一个一级菜单
   const setExpandedSection = (menuType, sections) => {
     if (menuType === 'domain') {
-      if (sections.length === 0) {
-        setExpandedSectionDomain(null);
-      } else      if (sections.length  == 1) {
-        setExpandedSectionDomain(sections[0]);
-      } else if (sections.length > 1) {
-        const section = sections.filter(section => section !== expandedSectionDomain)[0];
-        setExpandedSectionDomain(section);
-      }
+      // 只允许同时打开一个一级菜单，所以只取最后一个点击的
+      setUserExpandedDomain(sections.length > 0 ? sections[sections.length - 1] : null);
     } else if (menuType === 'group') {
-      if (sections.length === 0) {
-        setExpandedSectionGroup(null);
-      } else if (sections.length  == 1) {
-        setExpandedSectionGroup(sections[0]);
-      } else if (sections.length > 1) {
-        const section = sections.filter(section => section !== expandedSectionGroup)[0];
-        setExpandedSectionGroup(section);
-      }
+      // 只允许同时打开一个一级菜单，所以只取最后一个点击的
+      setUserExpandedGroup(sections.length > 0 ? sections[sections.length - 1] : null);
     }
   }
 
@@ -70,12 +59,26 @@ function App() {
         if (data.length > 0) {
           const process = data[new Date().getTime() % data.length];
           setSelectedProcess(process);
-          // 默认展开第一个过程所在的分组
-          setExpandedSectionDomain(process.domain);
-          setExpandedSectionGroup(process.group);
         }
       });
   }, []);
+
+  // 使用useMemo计算菜单的展开状态
+  // 当selectedProcess变化时，优先展开对应的菜单
+  // 当用户手动展开/收起菜单时，使用用户的选择
+  const domainOpenKeys = useMemo(() => {
+    if (selectedProcess) {
+      return [selectedProcess.domain];
+    }
+    return userExpandedDomain ? [userExpandedDomain] : [];
+  }, [selectedProcess, userExpandedDomain]);
+
+  const groupOpenKeys = useMemo(() => {
+    if (selectedProcess) {
+      return [selectedProcess.group];
+    }
+    return userExpandedGroup ? [userExpandedGroup] : [];
+  }, [selectedProcess, userExpandedGroup]);
 
   // 随机访问过程
   const handleRandomProcess = () => {
@@ -83,9 +86,6 @@ function App() {
       const randomIndex = Math.floor(Math.random() * processes.length);
       const randomProcess = processes[randomIndex];
       setSelectedProcess(randomProcess);
-      // 展开随机过程所在的分组
-      setExpandedSectionDomain( randomProcess.domain);
-      setExpandedSectionGroup(randomProcess.group);
       // 在移动端，选择过程后自动隐藏菜单
       if (window.innerWidth <= 768) {
         setShowMenu(false);
@@ -96,9 +96,6 @@ function App() {
   // 选择过程
   const handleSelectProcess = (process) => {
     setSelectedProcess(process);
-    // 展开选择过程所在的分组
-    setExpandedSectionDomain(process.domain);
-    setExpandedSectionGroup(process.group);
     // 在移动端，选择过程后自动隐藏菜单
     if (window.innerWidth <= 768) {
       setShowMenu(false);
@@ -113,11 +110,6 @@ function App() {
   // 切换菜单类型
   const switchMenu = (menuType) => {
     setActiveMenu(menuType);
-    // 切换菜单类型时，展开当前选中过程所在的分组
-    if (selectedProcess) {
-      setExpandedSectionDomain( selectedProcess.domain);
-      setExpandedSectionGroup(selectedProcess.group);
-    }
   };
 
   return (
@@ -176,7 +168,8 @@ function App() {
             <div className="menu-content">
               <Menu
                 mode="inline"
-                defaultOpenKeys={[expandedSectionDomain]}
+                openKeys={domainOpenKeys}
+                selectedKeys={selectedProcess ? [selectedProcess.process] : []}
                 onOpenChange={(keys) => setExpandedSection('domain', keys)}
                 items={Object.entries(groupedByDomain).map(([domain, domainProcesses]) => ({
                   key: domain,
@@ -195,7 +188,8 @@ function App() {
             <div className="menu-content">
               <Menu
                 mode="inline"
-                defaultOpenKeys={[expandedSectionGroup]}
+                openKeys={groupOpenKeys}
+                selectedKeys={selectedProcess ? [selectedProcess.process] : []}
                 onOpenChange={(keys) => setExpandedSection('group', keys)}
                 items={Object.entries(groupedByGroup).map(([group, groupProcesses]) => ({
                   key: group,
