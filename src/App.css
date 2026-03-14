@@ -86,18 +86,73 @@ body {
   flex: 1;
   background-color: #f5f5f5;
   padding: 0.25rem;
-  overflow-y: auto;
-  max-height: calc(100vh - 4rem);
 }
 
 .process-card {
   width: 100%;
 }
 
+/* 表格样式 */
+.process-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  font-size: 0.5rem;
+}
+
+.process-table th {
+  background-color: #4CAF50;
+  color: white;
+  font-weight: bold;
+  text-align: left;
+  padding: 0.25rem 1rem;
+  border: 0.0625rem solid #ddd;
+}
+
+.process-table td {
+  padding: 0.25rem 1rem;
+  border: 0.0625rem solid #ddd;
+  background-color: #f9f9f9;
+}
+
+/* 前三项左th右td的布局 */
+.process-table tr:nth-child(-n+3) th {
+  width: 25%;
+  min-width: 6rem;
+}
+
+/* 后面的上th下td的布局 */
+.process-table tr:nth-child(n+4) th {
+  text-align: center;
+  background-color: #45a049;
+}
+
+.process-table tr:nth-child(n+4) td {
+  text-align: justify;
+  line-height: 1.5;
+}
+
+/* 表格悬停效果 */
+.process-table tr:hover td {
+  background-color: #f1f1f1;
+}
+
+/* 响应式表格 */
+@media (max-width: 768px) {
+  .process-table {
+    font-size: 0.5rem;
+  }
+
+  .process-table tr:nth-child(-n+3) th {
+    /* width: 25%; */
+    min-width: 8em;
+  }
+}
+
 /* 移动端样式 */
 @media (max-width: 768px) {
   .app-header {
-    padding: 0 0.9375rem;
+    padding: 0 0.5rem;
   }
 
   .app-header h1 {
@@ -112,7 +167,7 @@ body {
 /* 平板设备样式 */
 @media (min-width: 769px) and (max-width: 1024px) {
   .app-header h1 {
-    font-size: 1.125rem;
+    font-size: 0.5rem;
   }
 }
 

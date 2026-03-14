@@ -13,6 +13,10 @@ function App() {
   const [activeMenu, setActiveMenu] = useState('domain'); // 'domain' 或 'group'
   const [expandedSection, setExpandedSection] = useState(null);
 
+  const formatList = (list) => {
+    return list.replace("（", '<br/>（ ');
+  }
+
   useEffect(() => {
     // 读取processes.json文件
     fetch('/processes.json')
@@ -102,22 +106,12 @@ function App() {
           <h1>过程</h1>
         </div>
         <div className="header-right">
-          <Space>
             <Button 
               type="primary" 
               onClick={handleRandomProcess}
             >
               随机访问过程
             </Button>
-            <Space>
-              <Switch 
-                checked={showDetails} 
-                onChange={(checked) => setShowDetails(checked)}
-                checkedChildren="显示"
-                unCheckedChildren="隐藏"
-              />
-            </Space>
-          </Space>
         </div>
       </header>
       
@@ -192,35 +186,95 @@ function App() {
         
         <main className="content">
           {selectedProcess ? (
-            <Card title={selectedProcess.process} className="process-card">
-              <Form layout="vertical" labelAlign="left" labelCol={{ span: 6 }} wrapperCol={{ span: 18 }}>
-                <Form.Item label="领域">
-                  <span>{selectedProcess.domain}</span>
-                </Form.Item>
-                <Form.Item label="过程组">
-                  <span>{selectedProcess.group}</span>
-                </Form.Item>
-                <Form.Item label="周期">
-                  <span>{selectedProcess.cycle}</span>
-                </Form.Item>
-                
-                {showDetails && (
-                  <>
-                    <Divider />
-                    <Form.Item label="定义">
-                      <span>{selectedProcess.definition}</span>
-                    </Form.Item>
-                    <Form.Item label="作用">
-                      <span>{selectedProcess.effect}</span>
-                    </Form.Item>
-                    {selectedProcess.document && (
-                      <Form.Item label="输出文档">
-                        <span>{selectedProcess.document}</span>
-                      </Form.Item>
-                    )}
-                  </>
-                )}
-              </Form>
+            <Card className="process-card" styles={{
+              header: {fontSize: '1rem'},
+              body: {padding: 0}}} >
+                <div slot="header">
+                  <span style={{fontSize: '1rem'}}>{selectedProcess.process}</span>
+                  <span style={{float:'right'}}><Switch 
+                    checked={showDetails} 
+                    onChange={(checked) => setShowDetails(checked)}
+                    checkedChildren="显示"
+                    unCheckedChildren="隐藏"
+                  /></span>
+                </div>
+              <table className="process-table" cellSpacing="0">
+                <tbody>
+                  {/* 前三项：左th右td */}
+                  <tr>
+                    <th>领域</th>
+                    <td>{selectedProcess.domain}</td>
+                  </tr>
+                  <tr>
+                    <th>过程组</th>
+                    <td>{selectedProcess.group}</td>
+                  </tr>
+                  
+                  {showDetails && (
+                    <>
+                      <tr>
+                        <th>周期</th>
+                        <td>{selectedProcess.cycle}</td>
+                      </tr>
+                      {/* 后面的：上th下td */}
+                      <tr>
+                        <th colSpan="2">定义</th>
+                      </tr>
+                      <tr>
+                        <td colSpan="2">{selectedProcess.definition}</td>
+                      </tr>
+                      <tr>
+                        <th colSpan="2">作用</th>
+                      </tr>
+                      <tr>
+                        <td colSpan="2">{selectedProcess.effect}</td>
+                      </tr>
+                      {selectedProcess.inputs && (
+                        <>
+                          <tr>
+                            <th colSpan="2">输入</th>
+                          </tr>
+                          <tr>
+                            <td colSpan="2">
+                              <ul>
+                                {selectedProcess.inputs.map((input) => <li key={input} dangerouslySetInnerHTML={{__html: formatList(input)}}></li>)}
+                              </ul>
+                            </td>
+                          </tr>
+                        </>
+                      )}
+                      {selectedProcess.toolsandTechniques && (
+                        <>
+                          <tr>
+                            <th colSpan="2">工具和技术</th>
+                          </tr>
+                          <tr>
+                            <td colSpan="2">
+                              <ul>
+                                {selectedProcess.toolsandTechniques.map((technique) => <li key={technique} dangerouslySetInnerHTML={{__html: formatList(technique)}}></li>)}
+                              </ul>
+                            </td>
+                          </tr>
+                        </>
+                      )}
+                      {selectedProcess.outputs && (
+                        <>
+                          <tr>
+                            <th colSpan="2">输出</th>
+                          </tr>
+                          <tr>
+                            <td colSpan="2">
+                              <ul>
+                                {selectedProcess.outputs.map((output) => <li key={output} dangerouslySetInnerHTML={{__html: formatList(output)}}></li>)}
+                              </ul>
+                            </td>
+                          </tr>
+                        </>
+                      )}
+                    </>
+                  )}
+                </tbody>
+              </table>
             </Card>
           ) : (
             <Card title="提示">
