@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { Menu, Button, Switch, Form, Card, Space, Divider, Tabs } from 'antd'
+import { MenuOutlined } from '@ant-design/icons'
 import './App.css'
 
 function App() {
@@ -87,139 +89,132 @@ function App() {
     }
   };
 
-  // 切换分组展开/折叠
-  const toggleSection = (section) => {
-    setExpandedSection(expandedSection === section ? null : section);
-  };
-
   return (
     <div className="app">
       <header className="app-header">
         <div className="header-left">
-          <button className="menu-toggle" onClick={toggleMenu}>
-            ☰
-          </button>
+          <Button 
+            type="text" 
+            icon={<MenuOutlined />} 
+            onClick={toggleMenu}
+            className="menu-toggle"
+          />
           <h1>过程</h1>
         </div>
         <div className="header-right">
-          <button className="random-button" onClick={handleRandomProcess}>
-            随机访问过程
-          </button>
-          <div className="toggle-container">
-            <label>
-              <input 
-                type="checkbox" 
+          <Space>
+            <Button 
+              type="primary" 
+              onClick={handleRandomProcess}
+            >
+              随机访问过程
+            </Button>
+            <Space>
+              <Switch 
                 checked={showDetails} 
-                onChange={() => setShowDetails(!showDetails)}
+                onChange={(checked) => setShowDetails(checked)}
+                checkedChildren="显示"
+                unCheckedChildren="隐藏"
               />
-              显示详细内容
-            </label>
-          </div>
+            </Space>
+          </Space>
         </div>
       </header>
       
       <div className={`app-content ${showMenu ? 'menu-open' : ''}`}>
         <nav className="menu">
           <div className="menu-tabs">
-            <button 
-              className={`menu-tab ${activeMenu === 'domain' ? 'active' : ''}`}
-              onClick={() => switchMenu('domain')}
-            >
-              知识领域
-            </button>
-            <button 
-              className={`menu-tab ${activeMenu === 'group' ? 'active' : ''}`}
-              onClick={() => switchMenu('group')}
-            >
-              过程组
-            </button>
+            <Tabs 
+              activeKey={activeMenu} 
+              onChange={switchMenu}
+              items={[
+                {
+                  key: 'domain',
+                  label: '知识领域'
+                },
+                {
+                  key: 'group',
+                  label: '过程组'
+                }
+              ]}
+            />
           </div>
           
           {activeMenu === 'domain' && (
             <div className="menu-content">
-              {Object.entries(groupedByDomain).map(([domain, domainProcesses]) => {
-                const isExpanded = expandedSection === domain;
-                return (
-                  <div key={domain} className="menu-section">
-                    <h2 className="section-header" onClick={() => toggleSection(domain)}>
-                      {domain}
-                      <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
-                        {isExpanded ? '▼' : '▶'}
-                      </span>
-                    </h2>
-                    {isExpanded && (
-                      <ul>
-                        {domainProcesses.map((process) => (
-                          <li 
-                            key={process.process} 
-                            className={selectedProcess?.process === process.process ? 'active' : ''}
-                            onClick={() => handleSelectProcess(process)}
-                          >
-                            {process.process}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
+              <Menu
+                mode="inline"
+                defaultOpenKeys={[expandedSection]}
+                onOpenChange={(keys) => setExpandedSection(keys[0])}
+                items={Object.entries(groupedByDomain).map(([domain, domainProcesses]) => ({
+                  key: domain,
+                  label: domain,
+                  children: domainProcesses.map((process) => ({
+                    key: process.process,
+                    label: process.process,
+                    onClick: () => handleSelectProcess(process)
+                  }))
+                }))}
+              />
             </div>
           )}
           
           {activeMenu === 'group' && (
             <div className="menu-content">
-              {Object.entries(groupedByGroup).map(([group, groupProcesses]) => {
-                const isExpanded = expandedSection === group;
-                return (
-                  <div key={group} className="menu-section">
-                    <h2 className="section-header" onClick={() => toggleSection(group)}>
-                      {group}
-                      <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
-                        {isExpanded ? '▼' : '▶'}
-                      </span>
-                    </h2>
-                    {isExpanded && (
-                      <ul>
-                        {groupProcesses.map((process) => (
-                          <li 
-                            key={process.process} 
-                            className={selectedProcess?.process === process.process ? 'active' : ''}
-                            onClick={() => handleSelectProcess(process)}
-                          >
-                            {process.process}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
+              <Menu
+                mode="inline"
+                defaultOpenKeys={[expandedSection]}
+                onOpenChange={(keys) => setExpandedSection(keys[0])}
+                items={Object.entries(groupedByGroup).map(([group, groupProcesses]) => ({
+                  key: group,
+                  label: group,
+                  children: groupProcesses.map((process) => ({
+                    key: process.process,
+                    label: process.process,
+                    onClick: () => handleSelectProcess(process)
+                  }))
+                }))}
+              />
             </div>
           )}
         </nav>
         
         <main className="content">
           {selectedProcess ? (
-            <div className="process-detail">
-              <h2>{selectedProcess.process}</h2>
-              <div className="process-meta">
-                <p><strong>领域：</strong>{selectedProcess.domain}</p>
-                <p><strong>过程组：</strong>{selectedProcess.group}</p>
-                <p><strong>周期：</strong>{selectedProcess.cycle}</p>
-              </div>
-              
-              {showDetails && (
-                <div className="process-details">
-                  <p><strong>定义：</strong>{selectedProcess.definition}</p>
-                  <p><strong>作用：</strong>{selectedProcess.effect}</p>
-                  {selectedProcess.document && (
-                    <p><strong>输出文档：</strong>{selectedProcess.document}</p>
-                  )}
-                </div>
-              )}
-            </div>
+            <Card title={selectedProcess.process} className="process-card">
+              <Form layout="vertical">
+                <Form.Item label="领域">
+                  <span>{selectedProcess.domain}</span>
+                </Form.Item>
+                <Form.Item label="过程组">
+                  <span>{selectedProcess.group}</span>
+                </Form.Item>
+                <Form.Item label="周期">
+                  <span>{selectedProcess.cycle}</span>
+                </Form.Item>
+                
+                {showDetails && (
+                  <>
+                    <Divider />
+                    <Form.Item label="定义">
+                      <span>{selectedProcess.definition}</span>
+                    </Form.Item>
+                    <Form.Item label="作用">
+                      <span>{selectedProcess.effect}</span>
+                    </Form.Item>
+                    {selectedProcess.document && (
+                      <Form.Item label="输出文档">
+                        <span>{selectedProcess.document}</span>
+                      </Form.Item>
+                    )}
+                  </>
+                )}
+              </Form>
+            </Card>
           ) : (
-            <p>请选择一个过程</p>
+            <Card title="提示">
+              <p>请选择一个过程</p>
+            </Card>
           )}
         </main>
       </div>
