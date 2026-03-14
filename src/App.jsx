@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Menu, Button, Switch, Form, Card, Space, Divider, Tabs, Drawer } from 'antd'
-import { MenuOutlined } from '@ant-design/icons'
-import './App.css'
+import { useState, useEffect, useMemo } from "react";
+import { Menu, Button, Switch, Card, Tabs, Drawer } from "antd";
+import { MenuOutlined } from "@ant-design/icons";
+import "./App.css";
 
 function App() {
   const [processes, setProcesses] = useState([]);
@@ -10,30 +10,34 @@ function App() {
   const [selectedProcess, setSelectedProcess] = useState(null);
   const [showDetails, setShowDetails] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
-  const [activeMenu, setActiveMenu] = useState('domain'); // 'domain' 或 'group'
+  const [activeMenu, setActiveMenu] = useState("domain"); // 'domain' 或 'group'
   const [userExpandedDomain, setUserExpandedDomain] = useState(null);
   const [userExpandedGroup, setUserExpandedGroup] = useState(null);
 
   const formatList = (list) => {
-    return list.replace("（", '<br/>（ ');
-  }
+    return list.replace("（", "<br/>（ ");
+  };
 
   // 处理菜单展开/收起事件，确保每次只打开一个一级菜单
   const setExpandedSection = (menuType, sections) => {
-    if (menuType === 'domain') {
+    if (menuType === "domain") {
       // 只允许同时打开一个一级菜单，所以只取最后一个点击的
-      setUserExpandedDomain(sections.length > 0 ? sections[sections.length - 1] : null);
-    } else if (menuType === 'group') {
+      setUserExpandedDomain(
+        sections.length > 0 ? sections[sections.length - 1] : null
+      );
+    } else if (menuType === "group") {
       // 只允许同时打开一个一级菜单，所以只取最后一个点击的
-      setUserExpandedGroup(sections.length > 0 ? sections[sections.length - 1] : null);
+      setUserExpandedGroup(
+        sections.length > 0 ? sections[sections.length - 1] : null
+      );
     }
-  }
+  };
 
   useEffect(() => {
     // 读取processes.json文件
-    fetch('./processes.json')
-      .then(response => response.json())
-      .then(data => {
+    fetch("./processes.json")
+      .then((response) => response.json())
+      .then((data) => {
         setProcesses(data);
         // 按领域分组
         const byDomain = data.reduce((acc, process) => {
@@ -44,7 +48,7 @@ function App() {
           return acc;
         }, {});
         setGroupedByDomain(byDomain);
-        
+
         // 按过程组分组
         const byGroup = data.reduce((acc, process) => {
           if (!acc[process.group]) {
@@ -54,7 +58,7 @@ function App() {
           return acc;
         }, {});
         setGroupedByGroup(byGroup);
-        
+
         // 默认选择第一个过程
         if (data.length > 0) {
           const process = data[new Date().getTime() % data.length];
@@ -114,24 +118,21 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-left">
-          <Button 
-            type="text" 
-            icon={<MenuOutlined />} 
+          <Button
+            type="text"
+            icon={<MenuOutlined />}
             onClick={toggleMenu}
             className="menu-toggle"
           />
           <h1>过程</h1>
         </div>
         <div className="header-right">
-            <Button 
-              type="primary" 
-              onClick={handleRandomProcess}
-            >
-              随机访问过程
-            </Button>
+          <Button type="primary" onClick={handleRandomProcess}>
+            随机访问过程
+          </Button>
         </div>
       </header>
-      
+
       <div className="app-content">
         <Drawer
           title="菜单"
@@ -141,82 +142,94 @@ function App() {
           clickAway={true}
           styles={{
             body: {
-              padding: 0
-            }
+              padding: 0,
+            },
           }}
         >
           <div className="menu-tabs">
-            <Tabs 
-              activeKey={activeMenu} 
+            <Tabs
+              activeKey={activeMenu}
               onChange={switchMenu}
               items={[
                 {
-                  key: 'domain',
-                  label: '知识领域'
+                  key: "domain",
+                  label: "知识领域",
                 },
                 {
-                  key: 'group',
-                  label: '过程组'
-                }
+                  key: "group",
+                  label: "过程组",
+                },
               ]}
             />
           </div>
-          
-          {activeMenu === 'domain' && (
+
+          {activeMenu === "domain" && (
             <div className="menu-content">
               <Menu
                 mode="inline"
                 openKeys={domainOpenKeys}
                 selectedKeys={selectedProcess ? [selectedProcess.process] : []}
-                onOpenChange={(keys) => setExpandedSection('domain', keys)}
-                items={Object.entries(groupedByDomain).map(([domain, domainProcesses]) => ({
-                  key: domain,
-                  label: domain,
-                  children: domainProcesses.map((process) => ({
-                    key: process.process,
-                    label: process.process,
-                    onClick: () => handleSelectProcess(process)
-                  }))
-                }))}
+                onOpenChange={(keys) => setExpandedSection("domain", keys)}
+                items={Object.entries(groupedByDomain).map(
+                  ([domain, domainProcesses]) => ({
+                    key: domain,
+                    label: domain,
+                    children: domainProcesses.map((process) => ({
+                      key: process.process,
+                      label: process.process,
+                      onClick: () => handleSelectProcess(process),
+                    })),
+                  })
+                )}
               />
             </div>
           )}
-          
-          {activeMenu === 'group' && (
+
+          {activeMenu === "group" && (
             <div className="menu-content">
               <Menu
                 mode="inline"
                 openKeys={groupOpenKeys}
                 selectedKeys={selectedProcess ? [selectedProcess.process] : []}
-                onOpenChange={(keys) => setExpandedSection('group', keys)}
-                items={Object.entries(groupedByGroup).map(([group, groupProcesses]) => ({
-                  key: group,
-                  label: group,
-                  children: groupProcesses.map((process) => ({
-                    key: process.process,
-                    label: process.process,
-                    onClick: () => handleSelectProcess(process)
-                  }))
-                }))}
+                onOpenChange={(keys) => setExpandedSection("group", keys)}
+                items={Object.entries(groupedByGroup).map(
+                  ([group, groupProcesses]) => ({
+                    key: group,
+                    label: group,
+                    children: groupProcesses.map((process) => ({
+                      key: process.process,
+                      label: process.process,
+                      onClick: () => handleSelectProcess(process),
+                    })),
+                  })
+                )}
               />
             </div>
           )}
         </Drawer>
-        
+
         <main className="content">
           {selectedProcess ? (
-            <Card className="process-card" styles={{
-              header: {fontSize: '1rem'},
-              body: {padding: 0}}} >
-                <div slot="header">
-                  <span style={{fontSize: '0.6rem'}}>{selectedProcess.process}</span>
-                  <span style={{float:'right'}}><Switch 
-                    checked={showDetails} 
+            <Card
+              className="process-card"
+              styles={{
+                header: { fontSize: "1rem" },
+                body: { padding: 0 },
+              }}
+            >
+              <div slot="header">
+                <span style={{ fontSize: "0.6rem" }}>
+                  {selectedProcess.process}
+                </span>
+                <span style={{ float: "right" }}>
+                  <Switch
+                    checked={showDetails}
                     onChange={(checked) => setShowDetails(checked)}
                     checkedChildren="显示"
                     unCheckedChildren="隐藏"
-                  /></span>
-                </div>
+                  />
+                </span>
+              </div>
               <table className="process-table" cellSpacing="0">
                 <tbody>
                   {/* 前三项：左th右td */}
@@ -228,7 +241,7 @@ function App() {
                     <th>过程组</th>
                     <td>{selectedProcess.group}</td>
                   </tr>
-                  
+
                   {showDetails && (
                     <>
                       <tr>
@@ -240,7 +253,9 @@ function App() {
                         <th colSpan="2">定义</th>
                       </tr>
                       <tr>
-                        <td colSpan="2" style={{textIndent: '2em'}}>{selectedProcess.definition}</td>
+                        <td colSpan="2" style={{ textIndent: "2em" }}>
+                          {selectedProcess.definition}
+                        </td>
                       </tr>
                       {selectedProcess.effects && (
                         <>
@@ -250,7 +265,14 @@ function App() {
                           <tr>
                             <td colSpan="2">
                               <ul>
-                                {selectedProcess.effects.map((effect) => <li key={effect} dangerouslySetInnerHTML={{__html: formatList(effect)}}></li>)}
+                                {selectedProcess.effects.map((effect) => (
+                                  <li
+                                    key={effect}
+                                    dangerouslySetInnerHTML={{
+                                      __html: formatList(effect),
+                                    }}
+                                  ></li>
+                                ))}
                               </ul>
                             </td>
                           </tr>
@@ -264,7 +286,14 @@ function App() {
                           <tr>
                             <td colSpan="2">
                               <ul>
-                                {selectedProcess.inputs.map((input) => <li key={input} dangerouslySetInnerHTML={{__html: formatList(input)}}></li>)}
+                                {selectedProcess.inputs.map((input) => (
+                                  <li
+                                    key={input}
+                                    dangerouslySetInnerHTML={{
+                                      __html: formatList(input),
+                                    }}
+                                  ></li>
+                                ))}
                               </ul>
                             </td>
                           </tr>
@@ -278,7 +307,16 @@ function App() {
                           <tr>
                             <td colSpan="2">
                               <ul>
-                                {selectedProcess.toolsandTechniques.map((technique) => <li key={technique} dangerouslySetInnerHTML={{__html: formatList(technique)}}></li>)}
+                                {selectedProcess.toolsandTechniques.map(
+                                  (technique) => (
+                                    <li
+                                      key={technique}
+                                      dangerouslySetInnerHTML={{
+                                        __html: formatList(technique),
+                                      }}
+                                    ></li>
+                                  )
+                                )}
                               </ul>
                             </td>
                           </tr>
@@ -292,7 +330,14 @@ function App() {
                           <tr>
                             <td colSpan="2">
                               <ul>
-                                {selectedProcess.outputs.map((output) => <li key={output} dangerouslySetInnerHTML={{__html: formatList(output)}}></li>)}
+                                {selectedProcess.outputs.map((output) => (
+                                  <li
+                                    key={output}
+                                    dangerouslySetInnerHTML={{
+                                      __html: formatList(output),
+                                    }}
+                                  ></li>
+                                ))}
                               </ul>
                             </td>
                           </tr>
@@ -311,7 +356,7 @@ function App() {
         </main>
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
