@@ -59,26 +59,20 @@ function App() {
         if (data.length > 0) {
           const process = data[new Date().getTime() % data.length];
           setSelectedProcess(process);
+          setUserExpandedDomain(process.domain);
+          setUserExpandedGroup(process.group);
         }
       });
   }, []);
 
   // 使用useMemo计算菜单的展开状态
-  // 当selectedProcess变化时，优先展开对应的菜单
-  // 当用户手动展开/收起菜单时，使用用户的选择
   const domainOpenKeys = useMemo(() => {
-    if (selectedProcess) {
-      return [selectedProcess.domain];
-    }
     return userExpandedDomain ? [userExpandedDomain] : [];
-  }, [selectedProcess, userExpandedDomain]);
+  }, [userExpandedDomain]);
 
   const groupOpenKeys = useMemo(() => {
-    if (selectedProcess) {
-      return [selectedProcess.group];
-    }
     return userExpandedGroup ? [userExpandedGroup] : [];
-  }, [selectedProcess, userExpandedGroup]);
+  }, [userExpandedGroup]);
 
   // 随机访问过程
   const handleRandomProcess = () => {
@@ -86,6 +80,8 @@ function App() {
       const randomIndex = Math.floor(Math.random() * processes.length);
       const randomProcess = processes[randomIndex];
       setSelectedProcess(randomProcess);
+      setUserExpandedDomain(randomProcess.domain);
+      setUserExpandedGroup(randomProcess.group);
       // 在移动端，选择过程后自动隐藏菜单
       if (window.innerWidth <= 768) {
         setShowMenu(false);
@@ -96,6 +92,8 @@ function App() {
   // 选择过程
   const handleSelectProcess = (process) => {
     setSelectedProcess(process);
+    setUserExpandedDomain(process.domain);
+    setUserExpandedGroup(process.group);
     // 在移动端，选择过程后自动隐藏菜单
     if (window.innerWidth <= 768) {
       setShowMenu(false);
