@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Menu, Button, Switch, Form, Card, Space, Divider, Tabs } from 'antd'
+import { Menu, Button, Switch, Form, Card, Space, Divider, Tabs, Drawer } from 'antd'
 import { MenuOutlined } from '@ant-design/icons'
 import './App.css'
 
@@ -121,8 +121,19 @@ function App() {
         </div>
       </header>
       
-      <div className={`app-content ${showMenu ? 'menu-open' : ''}`}>
-        <nav className="menu">
+      <div className="app-content">
+        <Drawer
+          title="菜单"
+          placement="left"
+          onClose={() => setShowMenu(false)}
+          open={showMenu}
+          clickAway={true}
+          styles={{
+            body: {
+              padding: 0
+            }
+          }}
+        >
           <div className="menu-tabs">
             <Tabs 
               activeKey={activeMenu} 
@@ -177,12 +188,12 @@ function App() {
               />
             </div>
           )}
-        </nav>
+        </Drawer>
         
         <main className="content">
           {selectedProcess ? (
             <Card title={selectedProcess.process} className="process-card">
-              <Form layout="vertical">
+              <Form layout="vertical" labelAlign="left" labelCol={{ span: 6 }} wrapperCol={{ span: 18 }}>
                 <Form.Item label="领域">
                   <span>{selectedProcess.domain}</span>
                 </Form.Item>
