@@ -4,6 +4,35 @@
   box-sizing: border-box;
 }
 
+/* 表格单元格样式 */
+.process-table td.text-indent {
+  text-indent: 2em;
+}
+
+/* 卡片头部样式 */
+.card-header {
+  display: flex;
+  align-items: center;
+}
+
+.card-header .space {
+  flex: 0.2;
+}
+
+.card-header .title {
+  font-size: 0.6rem;
+  flex: 0.6;
+}
+
+.card-header .switch {
+  flex: 0.2;
+}
+
+/* Switch主题色 */
+.ant-switch-checked {
+  background-color: #78909C !important;
+}
+
 :root {
   font-size: min(4vh, 8vw);
 }
@@ -113,6 +142,7 @@ body {
   padding: 0.2rem 1rem;
   border: 0.0625rem solid #ddd;
   background-color: #f9f9f9;
+  text-align: left;
 }
 
 /* 前三项左th右td的布局 */
@@ -123,7 +153,7 @@ body {
 
 /* 后面的上th下td的布局 */
 .process-table tr:nth-child(n+4) th {
-  background-color: #607D8B;
+  background-color: #78909C;
 }
 
 .process-table tr:nth-child(n+4) td {

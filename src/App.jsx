@@ -93,6 +93,30 @@ function App() {
     }
   };
 
+  // 前一个过程
+  const handlePrevProcess = () => {
+    if (selectedProcess) {
+      const currentIndex = processes.indexOf(selectedProcess);
+      const prevIndex = (currentIndex - 1 + processes.length) % processes.length;
+      const prevProcess = processes[prevIndex];
+      setSelectedProcess(prevProcess);
+      setUserExpandedDomain(prevProcess.domain);
+      setUserExpandedGroup(prevProcess.group);
+    }
+  };
+
+  // 后一个过程
+  const handleNextProcess = () => {
+    if (selectedProcess) {
+      const currentIndex = processes.indexOf(selectedProcess);
+      const nextIndex = (currentIndex + 1) % processes.length;
+      const nextProcess = processes[nextIndex];
+      setSelectedProcess(nextProcess);
+      setUserExpandedDomain(nextProcess.domain);
+      setUserExpandedGroup(nextProcess.group);
+    }
+  };
+
   // 选择过程
   const handleSelectProcess = (process) => {
     setSelectedProcess(process);
@@ -116,19 +140,25 @@ function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <div className="header-left">
-          <Button
-            type="text"
-            icon={<MenuOutlined />}
-            onClick={toggleMenu}
-            className="menu-toggle"
-          />
-          <h1>过程</h1>
-        </div>
+        <header className="app-header">
+          <div className="header-left">
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              onClick={toggleMenu}
+              className="menu-toggle"
+            />
+            <h1>过程</h1>
+          </div>
         <div className="header-right">
-          <Button type="primary" onClick={handleRandomProcess}>
-            随机访问过程
+          <Button onClick={handlePrevProcess}>
+            &larr;
+          </Button>
+          <Button onClick={handleRandomProcess}>
+            随机
+          </Button>
+          <Button onClick={handleNextProcess}>
+            &rarr;
           </Button>
         </div>
       </header>
@@ -217,11 +247,12 @@ function App() {
                 body: { padding: 0 },
               }}
             >
-              <div slot="header">
-                <span style={{ fontSize: "0.6rem" }}>
+              <div slot="header" className="card-header">
+                <span className="space">&nbsp;</span>
+                <span className="title">
                   {selectedProcess.process}
                 </span>
-                <span style={{ float: "right" }}>
+                <span className="switch">
                   <Switch
                     checked={showDetails}
                     onChange={(checked) => setShowDetails(checked)}
@@ -253,7 +284,7 @@ function App() {
                         <th colSpan="2">定义</th>
                       </tr>
                       <tr>
-                        <td colSpan="2" style={{ textIndent: "2em" }}>
+                        <td colSpan="2" className="text-indent">
                           {selectedProcess.definition}
                         </td>
                       </tr>
