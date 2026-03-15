@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Menu, Button, Switch, Card, Tabs, Drawer } from "antd";
 import { MenuOutlined } from "@ant-design/icons";
-import "./App.css";
+import "./App.less";
 
 function App() {
   const [processes, setProcesses] = useState([]);
