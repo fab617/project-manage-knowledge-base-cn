@@ -162,17 +162,16 @@ body {
   }
 
   // 前三项左th右td的布局
-  tr:nth-child(-n+3) th {
+  tr:nth-child(-n+2) th {
     width: 25%;
-    min-width: 6rem;
   }
 
   // 后面的上th下td的布局
-  tr:nth-child(n+4) th {
+  tr:nth-child(n+3) th {
     background-color: @primary-color;
   }
 
-  tr:nth-child(n+4) td {
+  tr:nth-child(n+3) td {
     text-align: justify;
     line-height: 1.5;
   }
@@ -188,8 +187,8 @@ body {
   .process-table {
     font-size: 0.4rem;
 
-    tr:nth-child(-n+3) th {
-      min-width: 8em;
+    tr:nth-child(-n+2) th {
+      width: 25%;
     }
   }
 }

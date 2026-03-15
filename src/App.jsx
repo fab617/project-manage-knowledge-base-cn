@@ -185,7 +185,7 @@ function App() {
             },
           }}
         >
-          <div className="menu-tabs">
+          <div className="menu-tabs" style={{ paddingLeft: '0.5rem' }}>
             <Tabs
               activeKey={activeMenu}
               onChange={switchMenu}
@@ -276,8 +276,6 @@ function App() {
                   <tr>
                     <th>领域</th>
                     <td>{selectedProcess.domain}</td>
-                  </tr>
-                  <tr>
                     <th>过程组</th>
                     <td>{selectedProcess.group}</td>
                   </tr>
@@ -286,24 +284,24 @@ function App() {
                     <>
                       <tr>
                         <th>周期</th>
-                        <td>{selectedProcess.cycle}</td>
+                        <td colSpan="3">{selectedProcess.cycle}</td>
                       </tr>
                       {/* 后面的：上th下td */}
                       <tr>
-                        <th colSpan="2">定义</th>
+                        <th colSpan="4">定义</th>
                       </tr>
                       <tr>
-                        <td colSpan="2" className="text-indent">
+                        <td colSpan="4" className="text-indent">
                           {selectedProcess.definition}
                         </td>
                       </tr>
                       {selectedProcess.effects && (
                         <>
                           <tr>
-                            <th colSpan="2">作用</th>
+                            <th colSpan="4">作用</th>
                           </tr>
                           <tr>
-                            <td colSpan="2">
+                            <td colSpan="4">
                               <ul>
                                 {selectedProcess.effects.map((effect) => (
                                   <li
@@ -321,10 +319,10 @@ function App() {
                       {selectedProcess.inputs && (
                         <>
                           <tr>
-                            <th colSpan="2">输入</th>
+                            <th colSpan="4">输入</th>
                           </tr>
                           <tr>
-                            <td colSpan="2">
+                            <td colSpan="4">
                               <ul>
                                 {selectedProcess.inputs.map((input) => (
                                   <li
@@ -342,10 +340,10 @@ function App() {
                       {selectedProcess.toolsAndTechniques && (
                         <>
                           <tr>
-                            <th colSpan="2">工具和技术</th>
+                            <th colSpan="4">工具和技术</th>
                           </tr>
                           <tr>
-                            <td colSpan="2">
+                            <td colSpan="4">
                               <ul>
                                 {selectedProcess.toolsAndTechniques.map(
                                   (technique) => (
@@ -365,10 +363,10 @@ function App() {
                       {selectedProcess.outputs && (
                         <>
                           <tr>
-                            <th colSpan="2">输出</th>
+                            <th colSpan="4">输出</th>
                           </tr>
                           <tr>
-                            <td colSpan="2">
+                            <td colSpan="4">
                               <ul>
                                 {selectedProcess.outputs.map((output) => (
                                   <li
