@@ -339,7 +339,7 @@ function App() {
                           </tr>
                         </>
                       )}
-                      {selectedProcess.toolsandTechniques && (
+                      {selectedProcess.toolsAndTechniques && (
                         <>
                           <tr>
                             <th colSpan="2">工具和技术</th>
@@ -347,7 +347,7 @@ function App() {
                           <tr>
                             <td colSpan="2">
                               <ul>
-                                {selectedProcess.toolsandTechniques.map(
+                                {selectedProcess.toolsAndTechniques.map(
                                   (technique) => (
                                     <li
                                       key={technique}
