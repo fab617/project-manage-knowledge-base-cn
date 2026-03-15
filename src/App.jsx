@@ -59,9 +59,14 @@ function App() {
         }, {});
         setGroupedByGroup(byGroup);
 
-        // 默认选择第一个过程
+        // 默认选择第一个过程或保存的过程
         if (data.length > 0) {
-          const process = data[new Date().getTime() % data.length];
+          const savedIndex = localStorage.getItem("selectedProcessIndex");
+          let index = 0;
+          if (savedIndex !== null && !isNaN(savedIndex) && savedIndex >= 0 && savedIndex < data.length) {
+            index = parseInt(savedIndex, 10);
+          }
+          const process = data[index];
           setSelectedProcess(process);
           setUserExpandedDomain(process.domain);
           setUserExpandedGroup(process.group);
@@ -86,6 +91,7 @@ function App() {
       setSelectedProcess(randomProcess);
       setUserExpandedDomain(randomProcess.domain);
       setUserExpandedGroup(randomProcess.group);
+      localStorage.setItem("selectedProcessIndex", randomIndex);
       // 在移动端，选择过程后自动隐藏菜单
       if (window.innerWidth <= 768) {
         setShowMenu(false);
@@ -102,6 +108,7 @@ function App() {
       setSelectedProcess(prevProcess);
       setUserExpandedDomain(prevProcess.domain);
       setUserExpandedGroup(prevProcess.group);
+      localStorage.setItem("selectedProcessIndex", prevIndex);
     }
   };
 
@@ -114,14 +121,16 @@ function App() {
       setSelectedProcess(nextProcess);
       setUserExpandedDomain(nextProcess.domain);
       setUserExpandedGroup(nextProcess.group);
+      localStorage.setItem("selectedProcessIndex", nextIndex);
     }
   };
 
   // 选择过程
-  const handleSelectProcess = (process) => {
+  const handleSelectProcess = (process, index) => {
     setSelectedProcess(process);
     setUserExpandedDomain(process.domain);
     setUserExpandedGroup(process.group);
+    localStorage.setItem("selectedProcessIndex", index);
     // 在移动端，选择过程后自动隐藏菜单
     if (window.innerWidth <= 768) {
       setShowMenu(false);
@@ -207,7 +216,7 @@ function App() {
                     children: domainProcesses.map((process) => ({
                       key: process.process,
                       label: process.process,
-                      onClick: () => handleSelectProcess(process),
+                      onClick: () => handleSelectProcess(process, processes.indexOf(process)),
                     })),
                   })
                 )}
@@ -229,7 +238,7 @@ function App() {
                     children: groupProcesses.map((process) => ({
                       key: process.process,
                       label: process.process,
-                      onClick: () => handleSelectProcess(process),
+                      onClick: () => handleSelectProcess(process, processes.indexOf(process)),
                     })),
                   })
                 )}
