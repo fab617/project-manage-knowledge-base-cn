@@ -143,7 +143,7 @@ function Performance() {
           title={
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>菜单</span>
-              <Link to="/"><HomeOutlined style={{ fontSize: '18px' }} /></Link>
+              <Link to="/"><HomeOutlined style={{ fontSize: '18px', color: '#78909C' }} /></Link>
             </div>
           }
           placement="left"
