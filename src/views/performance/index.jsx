@@ -1,18 +1,23 @@
 import { useState, useMemo } from "react";
 import { Menu, Button, Switch, Card, Drawer } from "antd";
-import { MenuOutlined, HomeOutlined } from "@ant-design/icons";
-import { Link } from "react-router-dom";
+import { MenuOutlined, HomeOutlined, SoundOutlined, PauseOutlined } from "@ant-design/icons";
+import { Link, useSearchParams } from "react-router-dom";
 import { useData } from "../../DataContext";
+import { useSpeechSynthesis } from "../../hooks/useSpeechSynthesis";
 import "./index.less";
 
 function Performance() {
   const { data } = useData();
   const performanceDomains = data.performanceDomains || [];
+  const { isSpeaking, speak, stop } = useSpeechSynthesis();
   
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [showDetails, setShowDetails] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [userExpandedDomain, setUserExpandedDomain] = useState(null);
+
+  const currentName = searchParams.get("name");
 
   const setExpandedSection = (sections) => {
     setUserExpandedDomain(
@@ -22,16 +27,27 @@ function Performance() {
 
   useMemo(() => {
     if (performanceDomains.length > 0) {
-      const savedIndex = localStorage.getItem("selectedPerformanceDomainIndex");
-      let index = 0;
-      if (savedIndex !== null && !isNaN(savedIndex) && savedIndex >= 0 && savedIndex < performanceDomains.length) {
-        index = parseInt(savedIndex, 10);
+      let index = -1;
+      if (currentName) {
+        index = performanceDomains.findIndex(d => d.domain_name === currentName);
+      }
+      if (index === -1) {
+        const savedIndex = localStorage.getItem("selectedPerformanceDomainIndex");
+        if (savedIndex !== null && !isNaN(savedIndex) && savedIndex >= 0 && savedIndex < performanceDomains.length) {
+          index = parseInt(savedIndex, 10);
+        } else {
+          index = 0;
+        }
       }
       const domain = performanceDomains[index];
       setSelectedDomain(domain);
       setUserExpandedDomain(domain.domain_name);
     }
-  }, [performanceDomains]);
+  }, [performanceDomains, currentName]);
+
+  const updateUrl = (domain) => {
+    setSearchParams({ name: domain.domain_name });
+  };
 
   const domainOpenKeys = useMemo(() => {
     return userExpandedDomain ? [userExpandedDomain] : [];
@@ -44,8 +60,12 @@ function Performance() {
       setSelectedDomain(randomDomain);
       setUserExpandedDomain(randomDomain.domain_name);
       localStorage.setItem("selectedPerformanceDomainIndex", randomIndex);
+      updateUrl(randomDomain);
       if (window.innerWidth <= 768) {
         setShowMenu(false);
+      }
+      if (isSpeaking) {
+        stop();
       }
     }
   };
@@ -58,6 +78,10 @@ function Performance() {
       setSelectedDomain(prevDomain);
       setUserExpandedDomain(prevDomain.domain_name);
       localStorage.setItem("selectedPerformanceDomainIndex", prevIndex);
+      updateUrl(prevDomain);
+      if (isSpeaking) {
+        stop();
+      }
     }
   };
 
@@ -69,6 +93,10 @@ function Performance() {
       setSelectedDomain(nextDomain);
       setUserExpandedDomain(nextDomain.domain_name);
       localStorage.setItem("selectedPerformanceDomainIndex", nextIndex);
+      updateUrl(nextDomain);
+      if (isSpeaking) {
+        stop();
+      }
     }
   };
 
@@ -76,9 +104,96 @@ function Performance() {
     setSelectedDomain(domain);
     setUserExpandedDomain(domain.domain_name);
     localStorage.setItem("selectedPerformanceDomainIndex", index);
+    updateUrl(domain);
     if (window.innerWidth <= 768) {
       setShowMenu(false);
     }
+    if (isSpeaking) {
+      stop();
+    }
+  };
+
+  const getTextToSpeak = () => {
+    if (!selectedDomain) return "";
+    let text = selectedDomain.domain_name + "。";
+    text += "定义：" + selectedDomain.definition + "。";
+    
+    if (showDetails) {
+      if (selectedDomain.expected_goals?.specific_goals) {
+        text += "预期目标：";
+        const goals = selectedDomain.expected_goals.specific_goals;
+        if (Array.isArray(goals)) {
+          goals.forEach(goal => text += goal + "。");
+        } else {
+          text += goals + "。";
+        }
+      }
+      
+      if (selectedDomain.performance_points) {
+        text += "绩效要点：";
+        if (selectedDomain.performance_points.key_points) {
+          text += "关键点：";
+          const keyPoints = selectedDomain.performance_points.key_points;
+          if (Array.isArray(keyPoints)) {
+            keyPoints.forEach(point => text += point + "。");
+          } else {
+            text += keyPoints + "。";
+          }
+        }
+        if (selectedDomain.performance_points.purpose) {
+          text += "目的：";
+          const purposes = selectedDomain.performance_points.purpose;
+          if (Array.isArray(purposes)) {
+            purposes.forEach(p => text += p + "。");
+          } else {
+            text += purposes + "。";
+          }
+        }
+        if (selectedDomain.performance_points.function) {
+          text += "功能：";
+          const functions = selectedDomain.performance_points.function;
+          if (Array.isArray(functions)) {
+            functions.forEach(f => text += f + "。");
+          } else {
+            text += functions + "。";
+          }
+        }
+      }
+      
+      if (selectedDomain.relationship_with_other_domains) {
+        text += "与其他绩效域的关系：";
+        const relationships = selectedDomain.relationship_with_other_domains;
+        if (Array.isArray(relationships)) {
+          relationships.forEach(r => text += r + "。");
+        } else {
+          text += relationships + "。";
+        }
+      }
+      
+      if (selectedDomain.inspection_methods) {
+        text += "检查方法：";
+        const methods = selectedDomain.inspection_methods;
+        if (Array.isArray(methods)) {
+          methods.forEach(m => text += m + "。");
+        } else {
+          text += methods + "。";
+        }
+      }
+    }
+    
+    return text;
+  };
+
+  const handleSpeak = () => {
+    if (!selectedDomain) return;
+    
+    if (isSpeaking) {
+      stop();
+      return;
+    }
+    
+    const text = getTextToSpeak();
+    speak(text);
   };
 
   const toggleMenu = () => {
@@ -126,6 +241,9 @@ function Performance() {
           <h1>绩效域</h1>
         </div>
         <div className="header-right">
+          <Button onClick={handleSpeak} disabled={!selectedDomain}>
+            {isSpeaking ? <><PauseOutlined /> 停止</> : <><SoundOutlined /> 朗读</>}
+          </Button>
           <Button onClick={handlePrevDomain}>
             &larr;
           </Button>

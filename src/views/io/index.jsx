@@ -1,16 +1,22 @@
 import { useState, useMemo } from "react";
 import { Menu, Button, Card, Drawer } from "antd";
-import { MenuOutlined, HomeOutlined } from "@ant-design/icons";
-import { Link } from "react-router-dom";
+import { MenuOutlined, HomeOutlined, SoundOutlined, PauseOutlined } from "@ant-design/icons";
+import { Link, useSearchParams } from "react-router-dom";
 import { useData } from "../../DataContext";
+import { useSpeechSynthesis } from "../../hooks/useSpeechSynthesis";
 import "./index.less";
 
 function InputsOutputs() {
   const { data } = useData();
   const inputsOutputs = data.inputsOutputs || [];
+  const processes = data.processes || [];
+  const { isSpeaking, speak, stop } = useSpeechSynthesis();
   
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedIO, setSelectedIO] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
+
+  const currentName = searchParams.get("name");
 
   const toggleMenu = () => {
     setShowMenu(!showMenu);
@@ -18,14 +24,25 @@ function InputsOutputs() {
 
   useMemo(() => {
     if (inputsOutputs.length > 0) {
-      const savedIndex = localStorage.getItem("selectedIOIndex");
-      let index = 0;
-      if (savedIndex !== null && !isNaN(savedIndex) && savedIndex >= 0 && savedIndex < inputsOutputs.length) {
-        index = parseInt(savedIndex, 10);
+      let index = -1;
+      if (currentName) {
+        index = inputsOutputs.findIndex(io => io.name === currentName);
+      }
+      if (index === -1) {
+        const savedIndex = localStorage.getItem("selectedIOIndex");
+        if (savedIndex !== null && !isNaN(savedIndex) && savedIndex >= 0 && savedIndex < inputsOutputs.length) {
+          index = parseInt(savedIndex, 10);
+        } else {
+          index = 0;
+        }
       }
       setSelectedIO(inputsOutputs[index]);
     }
-  }, [inputsOutputs]);
+  }, [inputsOutputs, currentName]);
+
+  const updateUrl = (io) => {
+    setSearchParams({ name: io.name });
+  };
 
   const handlePrevIO = () => {
     if (selectedIO) {
@@ -33,6 +50,8 @@ function InputsOutputs() {
       const prevIndex = (currentIndex - 1 + inputsOutputs.length) % inputsOutputs.length;
       setSelectedIO(inputsOutputs[prevIndex]);
       localStorage.setItem("selectedIOIndex", prevIndex);
+      updateUrl(inputsOutputs[prevIndex]);
+      if (isSpeaking) stop();
     }
   };
 
@@ -42,6 +61,8 @@ function InputsOutputs() {
       const nextIndex = (currentIndex + 1) % inputsOutputs.length;
       setSelectedIO(inputsOutputs[nextIndex]);
       localStorage.setItem("selectedIOIndex", nextIndex);
+      updateUrl(inputsOutputs[nextIndex]);
+      if (isSpeaking) stop();
     }
   };
 
@@ -50,15 +71,19 @@ function InputsOutputs() {
       const randomIndex = Math.floor(Math.random() * inputsOutputs.length);
       setSelectedIO(inputsOutputs[randomIndex]);
       localStorage.setItem("selectedIOIndex", randomIndex);
+      updateUrl(inputsOutputs[randomIndex]);
+      if (isSpeaking) stop();
     }
   };
 
   const handleSelectIO = (io, index) => {
     setSelectedIO(io);
     localStorage.setItem("selectedIOIndex", index);
+    updateUrl(io);
     if (window.innerWidth <= 768) {
       setShowMenu(false);
     }
+    if (isSpeaking) stop();
   };
 
   const menuItems = inputsOutputs.map((io, index) => ({
@@ -84,6 +109,23 @@ function InputsOutputs() {
           <h1>输入输出</h1>
         </div>
         <div className="header-right">
+          <Button onClick={() => {
+            if (!selectedIO) return;
+            if (isSpeaking) {
+              stop();
+              return;
+            }
+            let text = selectedIO.name + "。" + (selectedIO.definition || "");
+            if (selectedIO.outputsOf && selectedIO.outputsOf.length > 0) {
+              text += "输出过程：" + selectedIO.outputsOf.join("、") + "。";
+            }
+            if (selectedIO.inputsOf && selectedIO.inputsOf.length > 0) {
+              text += "输入过程：" + selectedIO.inputsOf.join("、") + "。";
+            }
+            speak(text);
+          }} disabled={!selectedIO}>
+            {isSpeaking ? <><PauseOutlined /> 停止</> : <><SoundOutlined /> 朗读</>}
+          </Button>
           <Button onClick={handlePrevIO}>
             &larr;
           </Button>
@@ -153,9 +195,9 @@ function InputsOutputs() {
                             {selectedIO.outputsOf.map((processName, idx) => (
                               <li><Link
                                 key={idx}
-                                to="/process"
+                                to={`/process?name=${encodeURIComponent(processName)}`}
                                 onClick={() => {
-                                  const processIndex = data.processes.findIndex(p => p.process === processName);
+                                  const processIndex = processes.findIndex(p => p.process === processName);
                                   if (processIndex !== -1) {
                                     localStorage.setItem("selectedProcessIndex", processIndex);
                                   }
@@ -180,9 +222,9 @@ function InputsOutputs() {
                             {selectedIO.inputsOf.map((processName, idx) => (
                               <li><Link
                                 key={idx}
-                                to="/process"
+                                to={`/process?name=${encodeURIComponent(processName)}`}
                                 onClick={() => {
-                                  const processIndex = data.processes.findIndex(p => p.process === processName);
+                                  const processIndex = processes.findIndex(p => p.process === processName);
                                   if (processIndex !== -1) {
                                     localStorage.setItem("selectedProcessIndex", processIndex);
                                   }

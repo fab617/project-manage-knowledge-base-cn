@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { Menu, Button, Switch, Card, Tabs, Drawer } from "antd";
-import { MenuOutlined, HomeOutlined } from "@ant-design/icons";
-import { Link } from "react-router-dom";
+import { MenuOutlined, HomeOutlined, SoundOutlined, PauseOutlined } from "@ant-design/icons";
+import { Link, useSearchParams } from "react-router-dom";
 import { useData } from "../../DataContext";
+import { useSpeechSynthesis } from "../../hooks/useSpeechSynthesis";
 import "./index.less";
 
 function Process() {
@@ -11,14 +12,18 @@ function Process() {
   const groupedByDomain = data.groupedByDomain || {};
   const groupedByGroup = data.groupedByGroup || {};
   const ioList = data.inputsOutputs || [];
-  const toolsList = data.tools || [];
+  const toolList = data.tools || [];
+  const { isSpeaking, speak, stop } = useSpeechSynthesis();
   
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedProcess, setSelectedProcess] = useState(null);
   const [showDetails, setShowDetails] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [activeMenu, setActiveMenu] = useState("domain");
   const [userExpandedDomain, setUserExpandedDomain] = useState(null);
   const [userExpandedGroup, setUserExpandedGroup] = useState(null);
+
+  const currentName = searchParams.get("name");
 
   const formatList = (list) => {
     return list.replace("（", "<br/>（ ");
@@ -28,13 +33,13 @@ function Process() {
     return ioList.filter(io => text.includes(io.name));
   };
 
-  const findAllMatchingTools = (text, toolsList) => {
-    return toolsList.filter(tool => text.includes(tool.name));
+  const findAllMatchingTools = (text, toolList) => {
+    return toolList.filter(tool => text.includes(tool.name));
   };
 
   const renderWithToolLinks = (text) => {
     if (!text) return null;
-    const matchedTools = findAllMatchingTools(text, toolsList);
+    const matchedTools = findAllMatchingTools(text, toolList);
     if (matchedTools.length === 0) {
       return <span dangerouslySetInnerHTML={{ __html: formatList(text) }} />;
     }
@@ -65,9 +70,9 @@ function Process() {
       parts.push(
         <Link
           key={`tool-${start}`}
-          to="/tools"
+          to={`/tool?name=${encodeURIComponent(tool.name)}`}
           onClick={() => {
-            const toolIndex = toolsList.indexOf(tool);
+            const toolIndex = toolList.indexOf(tool);
             if (toolIndex !== -1) {
               localStorage.setItem("selectedToolIndex", toolIndex);
             }
@@ -117,7 +122,7 @@ function Process() {
       parts.push(
         <Link
           key={`io-${start}`}
-          to="/inputs"
+          to={`/io?name=${encodeURIComponent(io.name)}`}
           onClick={() => {
             const ioIndex = ioList.indexOf(io);
             if (ioIndex !== -1) {
@@ -150,17 +155,28 @@ function Process() {
 
   useMemo(() => {
     if (processes.length > 0) {
-      const savedIndex = localStorage.getItem("selectedProcessIndex");
-      let index = 0;
-      if (savedIndex !== null && !isNaN(savedIndex) && savedIndex >= 0 && savedIndex < processes.length) {
-        index = parseInt(savedIndex, 10);
+      let index = -1;
+      if (currentName) {
+        index = processes.findIndex(p => p.process === currentName);
+      }
+      if (index === -1) {
+        const savedIndex = localStorage.getItem("selectedProcessIndex");
+        if (savedIndex !== null && !isNaN(savedIndex) && savedIndex >= 0 && savedIndex < processes.length) {
+          index = parseInt(savedIndex, 10);
+        } else {
+          index = 0;
+        }
       }
       const process = processes[index];
       setSelectedProcess(process);
       setUserExpandedDomain(process.domain);
       setUserExpandedGroup(process.group);
     }
-  }, [processes]);
+  }, [processes, currentName]);
+
+  const updateUrl = (process) => {
+    setSearchParams({ name: process.process });
+  };
 
   const domainOpenKeys = useMemo(() => {
     return userExpandedDomain ? [userExpandedDomain] : [];
@@ -178,9 +194,11 @@ function Process() {
       setUserExpandedDomain(randomProcess.domain);
       setUserExpandedGroup(randomProcess.group);
       localStorage.setItem("selectedProcessIndex", randomIndex);
+      updateUrl(randomProcess);
       if (window.innerWidth <= 768) {
         setShowMenu(false);
       }
+      if (isSpeaking) stop();
     }
   };
 
@@ -193,6 +211,8 @@ function Process() {
       setUserExpandedDomain(prevProcess.domain);
       setUserExpandedGroup(prevProcess.group);
       localStorage.setItem("selectedProcessIndex", prevIndex);
+      updateUrl(prevProcess);
+      if (isSpeaking) stop();
     }
   };
 
@@ -205,6 +225,8 @@ function Process() {
       setUserExpandedDomain(nextProcess.domain);
       setUserExpandedGroup(nextProcess.group);
       localStorage.setItem("selectedProcessIndex", nextIndex);
+      updateUrl(nextProcess);
+      if (isSpeaking) stop();
     }
   };
 
@@ -213,9 +235,11 @@ function Process() {
     setUserExpandedDomain(process.domain);
     setUserExpandedGroup(process.group);
     localStorage.setItem("selectedProcessIndex", index);
+    updateUrl(process);
     if (window.innerWidth <= 768) {
       setShowMenu(false);
     }
+    if (isSpeaking) stop();
   };
 
   const toggleMenu = () => {
@@ -239,6 +263,35 @@ function Process() {
             <h1>过程</h1>
           </div>
         <div className="header-right">
+          <Button onClick={() => {
+            if (!selectedProcess) return;
+            if (isSpeaking) {
+              stop();
+              return;
+            }
+            let text = selectedProcess.process + "。";
+            text += "领域：" + selectedProcess.domain + "。";
+            text += "过程组：" + selectedProcess.group + "。";
+            if (showDetails && selectedProcess.definition) {
+              text += "定义：" + selectedProcess.definition + "。";
+            }
+            if (showDetails && selectedProcess.effects) {
+              text += "作用：" + selectedProcess.effects.join("、") + "。";
+            }
+            if (showDetails && selectedProcess.inputs) {
+              text += "输入：" + selectedProcess.inputs.join("、") + "。";
+            }
+            if (showDetails && selectedProcess.toolsAndTechniques) {
+              const tools = selectedProcess.toolsAndTechniques.map(t => typeof t === 'string' ? t : t.name);
+              text += "工具技术：" + tools.join("、") + "。";
+            }
+            if (showDetails && selectedProcess.outputs) {
+              text += "输出：" + selectedProcess.outputs.join("、") + "。";
+            }
+            speak(text);
+          }} disabled={!selectedProcess}>
+            {isSpeaking ? <><PauseOutlined /> 停止</> : <><SoundOutlined /> 朗读</>}
+          </Button>
           <Button onClick={handlePrevProcess}>
             &larr;
           </Button>

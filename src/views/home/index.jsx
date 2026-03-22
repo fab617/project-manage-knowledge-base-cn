@@ -4,15 +4,15 @@ import "./index.less";
 function Home() {
   return (
     <div className="home-container">
-      <h1>项目管理实践</h1>
+      <h1>项目管理理论</h1>
       <div className="entry-cards">
         <Link to="/process" className="entry-card">
           <h2>过程</h2>
         </Link>
-        <Link to="/tools" className="entry-card">
+        <Link to="/tool" className="entry-card">
           <h2>工具与技术</h2>
         </Link>
-        <Link to="/inputs" className="entry-card">
+        <Link to="/io" className="entry-card">
           <h2>输入输出</h2>
         </Link>
         <Link to="/performance" className="entry-card">
