@@ -34,28 +34,22 @@ function LoadingWrapper({ children }) {
   return children
 }
 
-function AppRoutes() {
-  return (
-    <DataProvider>
-      <LoadingWrapper>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/process" element={<Process />} />
-          <Route path="/performance" element={<Performance />} />
-          <Route path="/tool" element={<Tool />} />
-          <Route path="/io" element={<InputsOutput />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </LoadingWrapper>
-    </DataProvider>
-  )
-}
-
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter basename="/files/pm/">
       <ScrollToTop />
-      <AppRoutes />
+      <DataProvider>
+        <LoadingWrapper>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/process" element={<Process />} />
+            <Route path="/performance" element={<Performance />} />
+            <Route path="/tool" element={<Tool />} />
+            <Route path="/io" element={<InputsOutput />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </LoadingWrapper>
+      </DataProvider>
     </BrowserRouter>
   </StrictMode>,
 )

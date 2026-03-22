@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Menu, Button, Switch, Card, Drawer } from "antd";
 import { MenuOutlined, HomeOutlined, SoundOutlined, PauseOutlined } from "@ant-design/icons";
 import { Link, useSearchParams } from "react-router-dom";
@@ -132,11 +132,14 @@ function Performance() {
       if (selectedDomain.points) {
         text += "绩效要点：";
         const points = selectedDomain.points;
-        if (Array.isArray(points)) {
-          points.forEach(point => text += point + "。");
-        } else {
-          text += points + "。";
-        }
+        Object.entries(points).forEach(([key, value]) => {
+          text += key + "：";
+          if (typeof value === 'string') {
+            text += value + "。";
+          } else if (Array.isArray(value)) {
+            value.forEach(v => text += v + "。");
+          }
+        });
       }
       
       if (selectedDomain.relationships) {
@@ -187,7 +190,13 @@ function Performance() {
 
   const formatArray = (arr) => {
     if (!arr) return null;
-    if (typeof arr === 'string') return arr;
+    if (typeof arr === 'string') {
+      const parts = arr.split('（');
+      if (parts.length === 1) return arr;
+      return parts.map((part, i) => 
+        i === 0 ? part : <React.Fragment key={i}><br />（{part}</React.Fragment>
+      );
+    }
     return arr;
   };
 
@@ -324,20 +333,7 @@ function Performance() {
                           <tr>
                             <th>绩效要点</th>
                           </tr>
-                          <tr>
-                            <td>
-                              {renderArrayItems(selectedDomain.points)}
-                            </td>
-                          </tr>
-                        </>
-                      )}
-
-                      {selectedDomain.relationships && (
-                        <>
-                          <tr>
-                            <th>与其他绩效域的关系</th>
-                          </tr>
-                          {Object.entries(selectedDomain.relationships).map(([key, value], index) => (
+                          {Object.entries(selectedDomain.points).map(([key, value], index) => (
                             <tr key={index}>
                               <td>
                                 <div className="point-section">
@@ -361,6 +357,24 @@ function Performance() {
                                 <div className="inspection-section">
                                   <strong>{key}：</strong>
                                   {renderArrayItems(methods)}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </>
+                      )}
+
+                      {selectedDomain.relationships && (
+                        <>
+                          <tr>
+                            <th>与其他绩效域的关系</th>
+                          </tr>
+                          {Object.entries(selectedDomain.relationships).map(([key, value], index) => (
+                            <tr key={index}>
+                              <td>
+                                <div className="point-section">
+                                  <strong>{key}：</strong>
+                                  {typeof value === 'string' ? value : renderArrayItems(value)}
                                 </div>
                               </td>
                             </tr>
