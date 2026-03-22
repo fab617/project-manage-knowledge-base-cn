@@ -1,16 +1,22 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Menu, Button, Switch, Card, Tabs, Drawer } from "antd";
-import { MenuOutlined } from "@ant-design/icons";
-import "./App.less";
+import { MenuOutlined, HomeOutlined } from "@ant-design/icons";
+import { Link } from "react-router-dom";
+import { useData } from "../../DataContext";
+import "./index.less";
 
-function App() {
-  const [processes, setProcesses] = useState([]);
-  const [groupedByDomain, setGroupedByDomain] = useState({});
-  const [groupedByGroup, setGroupedByGroup] = useState({});
+function Process() {
+  const { data } = useData();
+  const processes = data.processes || [];
+  const groupedByDomain = data.groupedByDomain || {};
+  const groupedByGroup = data.groupedByGroup || {};
+  const ioList = data.inputsOutputs || [];
+  const toolsList = data.tools || [];
+  
   const [selectedProcess, setSelectedProcess] = useState(null);
   const [showDetails, setShowDetails] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
-  const [activeMenu, setActiveMenu] = useState("domain"); // 'domain' 或 'group'
+  const [activeMenu, setActiveMenu] = useState("domain");
   const [userExpandedDomain, setUserExpandedDomain] = useState(null);
   const [userExpandedGroup, setUserExpandedGroup] = useState(null);
 
@@ -18,63 +24,144 @@ function App() {
     return list.replace("（", "<br/>（ ");
   };
 
-  // 处理菜单展开/收起事件，确保每次只打开一个一级菜单
+  const findAllMatchingIOs = (text, ioList) => {
+    return ioList.filter(io => text.includes(io.name));
+  };
+
+  const findAllMatchingTools = (text, toolsList) => {
+    return toolsList.filter(tool => text.includes(tool.name));
+  };
+
+  const renderWithToolLinks = (text) => {
+    if (!text) return null;
+    const matchedTools = findAllMatchingTools(text, toolsList);
+    if (matchedTools.length === 0) {
+      return <span dangerouslySetInnerHTML={{ __html: formatList(text) }} />;
+    }
+    matchedTools.sort((a, b) => b.name.length - a.name.length);
+    const matches = [];
+    matchedTools.forEach((tool) => {
+      const index = text.indexOf(tool.name);
+      if (index !== -1) {
+        let overlaps = false;
+        for (const m of matches) {
+          if (index < m.end && index + tool.name.length > m.start) {
+            overlaps = true;
+            break;
+          }
+        }
+        if (!overlaps) {
+          matches.push({ tool, start: index, end: index + tool.name.length });
+        }
+      }
+    });
+    matches.sort((a, b) => a.start - b.start);
+    const parts = [];
+    let lastIndex = 0;
+    matches.forEach(({ tool, start, end }) => {
+      if (start > lastIndex) {
+        parts.push(<span key={`text-${lastIndex}`} dangerouslySetInnerHTML={{ __html: formatList(text.slice(lastIndex, start)) }} />);
+      }
+      parts.push(
+        <Link
+          key={`tool-${start}`}
+          to="/tools"
+          onClick={() => {
+            const toolIndex = toolsList.indexOf(tool);
+            if (toolIndex !== -1) {
+              localStorage.setItem("selectedToolIndex", toolIndex);
+            }
+          }}
+        >
+          {tool.name}
+        </Link>
+      );
+      lastIndex = end;
+    });
+    if (lastIndex < text.length) {
+      parts.push(<span key={`text-${lastIndex}`} dangerouslySetInnerHTML={{ __html: formatList(text.slice(lastIndex)) }} />);
+    }
+    return parts;
+  };
+
+  const renderWithIOLinks = (text) => {
+    if (!text) return null;
+    const matchedIOs = findAllMatchingIOs(text, ioList);
+    if (matchedIOs.length === 0) {
+      return <span dangerouslySetInnerHTML={{ __html: formatList(text) }} />;
+    }
+    matchedIOs.sort((a, b) => b.name.length - a.name.length);
+    const matches = [];
+    matchedIOs.forEach((io) => {
+      const index = text.indexOf(io.name);
+      if (index !== -1) {
+        let overlaps = false;
+        for (const m of matches) {
+          if (index < m.end && index + io.name.length > m.start) {
+            overlaps = true;
+            break;
+          }
+        }
+        if (!overlaps) {
+          matches.push({ io, start: index, end: index + io.name.length });
+        }
+      }
+    });
+    matches.sort((a, b) => a.start - b.start);
+    const parts = [];
+    let lastIndex = 0;
+    matches.forEach(({ io, start, end }) => {
+      if (start > lastIndex) {
+        parts.push(<span key={`text-${lastIndex}`} dangerouslySetInnerHTML={{ __html: formatList(text.slice(lastIndex, start)) }} />);
+      }
+      parts.push(
+        <Link
+          key={`io-${start}`}
+          to="/inputs"
+          onClick={() => {
+            const ioIndex = ioList.indexOf(io);
+            if (ioIndex !== -1) {
+              localStorage.setItem("selectedIOIndex", ioIndex);
+            }
+          }}
+        >
+          {io.name}
+        </Link>
+      );
+      lastIndex = end;
+    });
+    if (lastIndex < text.length) {
+      parts.push(<span key={`text-${lastIndex}`} dangerouslySetInnerHTML={{ __html: formatList(text.slice(lastIndex)) }} />);
+    }
+    return parts;
+  };
+
   const setExpandedSection = (menuType, sections) => {
     if (menuType === "domain") {
-      // 只允许同时打开一个一级菜单，所以只取最后一个点击的
       setUserExpandedDomain(
         sections.length > 0 ? sections[sections.length - 1] : null
       );
     } else if (menuType === "group") {
-      // 只允许同时打开一个一级菜单，所以只取最后一个点击的
       setUserExpandedGroup(
         sections.length > 0 ? sections[sections.length - 1] : null
       );
     }
   };
 
-  useEffect(() => {
-    // 读取processes.json文件
-    fetch("./processes.json")
-      .then((response) => response.json())
-      .then((data) => {
-        setProcesses(data);
-        // 按领域分组
-        const byDomain = data.reduce((acc, process) => {
-          if (!acc[process.domain]) {
-            acc[process.domain] = [];
-          }
-          acc[process.domain].push(process);
-          return acc;
-        }, {});
-        setGroupedByDomain(byDomain);
+  useMemo(() => {
+    if (processes.length > 0) {
+      const savedIndex = localStorage.getItem("selectedProcessIndex");
+      let index = 0;
+      if (savedIndex !== null && !isNaN(savedIndex) && savedIndex >= 0 && savedIndex < processes.length) {
+        index = parseInt(savedIndex, 10);
+      }
+      const process = processes[index];
+      setSelectedProcess(process);
+      setUserExpandedDomain(process.domain);
+      setUserExpandedGroup(process.group);
+    }
+  }, [processes]);
 
-        // 按过程组分组
-        const byGroup = data.reduce((acc, process) => {
-          if (!acc[process.group]) {
-            acc[process.group] = [];
-          }
-          acc[process.group].push(process);
-          return acc;
-        }, {});
-        setGroupedByGroup(byGroup);
-
-        // 默认选择第一个过程或保存的过程
-        if (data.length > 0) {
-          const savedIndex = localStorage.getItem("selectedProcessIndex");
-          let index = 0;
-          if (savedIndex !== null && !isNaN(savedIndex) && savedIndex >= 0 && savedIndex < data.length) {
-            index = parseInt(savedIndex, 10);
-          }
-          const process = data[index];
-          setSelectedProcess(process);
-          setUserExpandedDomain(process.domain);
-          setUserExpandedGroup(process.group);
-        }
-      });
-  }, []);
-
-  // 使用useMemo计算菜单的展开状态
   const domainOpenKeys = useMemo(() => {
     return userExpandedDomain ? [userExpandedDomain] : [];
   }, [userExpandedDomain]);
@@ -83,7 +170,6 @@ function App() {
     return userExpandedGroup ? [userExpandedGroup] : [];
   }, [userExpandedGroup]);
 
-  // 随机访问过程
   const handleRandomProcess = () => {
     if (processes.length > 0) {
       const randomIndex = Math.floor(Math.random() * processes.length);
@@ -92,14 +178,12 @@ function App() {
       setUserExpandedDomain(randomProcess.domain);
       setUserExpandedGroup(randomProcess.group);
       localStorage.setItem("selectedProcessIndex", randomIndex);
-      // 在移动端，选择过程后自动隐藏菜单
       if (window.innerWidth <= 768) {
         setShowMenu(false);
       }
     }
   };
 
-  // 前一个过程
   const handlePrevProcess = () => {
     if (selectedProcess) {
       const currentIndex = processes.indexOf(selectedProcess);
@@ -112,7 +196,6 @@ function App() {
     }
   };
 
-  // 后一个过程
   const handleNextProcess = () => {
     if (selectedProcess) {
       const currentIndex = processes.indexOf(selectedProcess);
@@ -125,24 +208,20 @@ function App() {
     }
   };
 
-  // 选择过程
   const handleSelectProcess = (process, index) => {
     setSelectedProcess(process);
     setUserExpandedDomain(process.domain);
     setUserExpandedGroup(process.group);
     localStorage.setItem("selectedProcessIndex", index);
-    // 在移动端，选择过程后自动隐藏菜单
     if (window.innerWidth <= 768) {
       setShowMenu(false);
     }
   };
 
-  // 切换菜单显示/隐藏
   const toggleMenu = () => {
     setShowMenu(!showMenu);
   };
 
-  // 切换菜单类型
   const switchMenu = (menuType) => {
     setActiveMenu(menuType);
   };
@@ -174,7 +253,12 @@ function App() {
 
       <div className="app-content">
         <Drawer
-          title="菜单"
+          title={
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>菜单</span>
+              <Link to="/"><HomeOutlined style={{ fontSize: '18px' }} /></Link>
+            </div>
+          }
           placement="left"
           onClose={() => setShowMenu(false)}
           open={showMenu}
@@ -272,7 +356,6 @@ function App() {
               </div>
               <table className="process-table" cellSpacing="0">
                 <tbody>
-                  {/* 前三项：左th右td */}
                   <tr>
                     <th>领域</th>
                     <td>{selectedProcess.domain}</td>
@@ -286,7 +369,6 @@ function App() {
                         <th>周期</th>
                         <td colSpan="3">{selectedProcess.cycle}</td>
                       </tr>
-                      {/* 后面的：上th下td */}
                       <tr>
                         <th colSpan="4">定义</th>
                       </tr>
@@ -325,12 +407,7 @@ function App() {
                             <td colSpan="4">
                               <ul>
                                 {selectedProcess.inputs.map((input) => (
-                                  <li
-                                    key={input}
-                                    dangerouslySetInnerHTML={{
-                                      __html: formatList(input),
-                                    }}
-                                  ></li>
+                                  <li key={input}>{renderWithIOLinks(input)}</li>
                                 ))}
                               </ul>
                             </td>
@@ -347,12 +424,7 @@ function App() {
                               <ul>
                                 {selectedProcess.toolsAndTechniques.map(
                                   (technique) => (
-                                    <li
-                                      key={technique}
-                                      dangerouslySetInnerHTML={{
-                                        __html: formatList(technique),
-                                      }}
-                                    ></li>
+                                    <li key={technique}>{renderWithToolLinks(technique)}</li>
                                   )
                                 )}
                               </ul>
@@ -369,12 +441,7 @@ function App() {
                             <td colSpan="4">
                               <ul>
                                 {selectedProcess.outputs.map((output) => (
-                                  <li
-                                    key={output}
-                                    dangerouslySetInnerHTML={{
-                                      __html: formatList(output),
-                                    }}
-                                  ></li>
+                                  <li key={output}>{renderWithIOLinks(output)}</li>
                                 ))}
                               </ul>
                             </td>
@@ -397,4 +464,4 @@ function App() {
   );
 }
 
-export default App;
+export default Process;

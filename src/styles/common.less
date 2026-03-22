@@ -1,0 +1,186 @@
+@primary-color: #78909C;
+@bg-color: #f5f5f5;
+@text-color: #333;
+@border-color: #ddd;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  font-size: min(4vh, 8vw);
+}
+
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  color: @text-color;
+  background-color: @bg-color;
+  font-size: 1rem;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  height: 4em;
+
+  .space {
+    flex: 0.18;
+  }
+
+  .title {
+    font-size: 0.6rem;
+    flex: 0.64;
+    text-align: center;
+  }
+
+  .switch {
+    text-align: center;
+    flex: 0.18;
+  }
+}
+
+.process-table td.text-indent {
+  text-indent: 2em;
+}
+
+.ant-switch-checked {
+  background-color: @primary-color !important;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+  .app-header {
+    background-color: @primary-color;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 0.25rem;
+    align-items: center;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: 2rem;
+
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+
+      .menu-toggle {
+        color: white;
+      }
+
+      button {
+        font-size: 0.75rem;
+      }
+
+      h1 {
+        font-weight: bold;
+        white-space: nowrap;
+        font-size: 0.75rem;
+      }
+    }
+
+    .header-right {
+      display: flex;
+      gap: 0.25rem;
+    }
+  }
+
+  .app-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content {
+    flex: 1;
+    padding: 0.5rem;
+    overflow: auto;
+  }
+}
+
+.process-card {
+  .ant-card-head {
+    background-color: @primary-color;
+  }
+}
+
+.process-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.55rem;
+
+  th,
+  td {
+    border: 1px solid @border-color;
+    padding: 0.25rem 0.5rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    background-color: @primary-color;
+    font-weight: bold;
+  }
+
+  td {
+    background-color: white;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1rem;
+  }
+
+  li {
+    margin-bottom: 0.125rem;
+  }
+}
+
+.point-section {
+  margin-bottom: 0.5rem;
+
+  strong {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  ul {
+    margin: 0.25rem 0;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    font-size: 16px;
+  }
+
+  .app {
+    .app-header {
+      height: 3rem;
+      padding: 0 1rem;
+    }
+
+    .content {
+      padding: 1rem;
+    }
+  }
+
+  .process-table {
+    font-size: 0.875rem;
+
+    th,
+    td {
+      padding: 0.5rem 1rem;
+    }
+  }
+}
