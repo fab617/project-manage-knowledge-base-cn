@@ -29,7 +29,7 @@ function Performance() {
     if (performanceDomains.length > 0) {
       let index = -1;
       if (currentName) {
-        index = performanceDomains.findIndex(d => d.domain_name === currentName);
+        index = performanceDomains.findIndex(d => d.name === currentName);
       }
       if (index === -1) {
         const savedIndex = localStorage.getItem("selectedPerformanceDomainIndex");
@@ -41,12 +41,12 @@ function Performance() {
       }
       const domain = performanceDomains[index];
       setSelectedDomain(domain);
-      setUserExpandedDomain(domain.domain_name);
+      setUserExpandedDomain(domain.name);
     }
   }, [performanceDomains, currentName]);
 
   const updateUrl = (domain) => {
-    setSearchParams({ name: domain.domain_name });
+    setSearchParams({ name: domain.name });
   };
 
   const domainOpenKeys = useMemo(() => {
@@ -58,7 +58,7 @@ function Performance() {
       const randomIndex = Math.floor(Math.random() * performanceDomains.length);
       const randomDomain = performanceDomains[randomIndex];
       setSelectedDomain(randomDomain);
-      setUserExpandedDomain(randomDomain.domain_name);
+      setUserExpandedDomain(randomDomain.name);
       localStorage.setItem("selectedPerformanceDomainIndex", randomIndex);
       updateUrl(randomDomain);
       if (window.innerWidth <= 768) {
@@ -76,7 +76,7 @@ function Performance() {
       const prevIndex = (currentIndex - 1 + performanceDomains.length) % performanceDomains.length;
       const prevDomain = performanceDomains[prevIndex];
       setSelectedDomain(prevDomain);
-      setUserExpandedDomain(prevDomain.domain_name);
+      setUserExpandedDomain(prevDomain.name);
       localStorage.setItem("selectedPerformanceDomainIndex", prevIndex);
       updateUrl(prevDomain);
       if (isSpeaking) {
@@ -91,7 +91,7 @@ function Performance() {
       const nextIndex = (currentIndex + 1) % performanceDomains.length;
       const nextDomain = performanceDomains[nextIndex];
       setSelectedDomain(nextDomain);
-      setUserExpandedDomain(nextDomain.domain_name);
+      setUserExpandedDomain(nextDomain.name);
       localStorage.setItem("selectedPerformanceDomainIndex", nextIndex);
       updateUrl(nextDomain);
       if (isSpeaking) {
@@ -102,7 +102,7 @@ function Performance() {
 
   const handleSelectDomain = (domain, index) => {
     setSelectedDomain(domain);
-    setUserExpandedDomain(domain.domain_name);
+    setUserExpandedDomain(domain.name);
     localStorage.setItem("selectedPerformanceDomainIndex", index);
     updateUrl(domain);
     if (window.innerWidth <= 768) {
@@ -115,13 +115,13 @@ function Performance() {
 
   const getTextToSpeak = () => {
     if (!selectedDomain) return "";
-    let text = selectedDomain.domain_name + "。";
+    let text = selectedDomain.name + "。";
     text += "定义：" + selectedDomain.definition + "。";
     
     if (showDetails) {
-      if (selectedDomain.expected_goals?.specific_goals) {
-        text += "预期目标：";
-        const goals = selectedDomain.expected_goals.specific_goals;
+      if (selectedDomain.goals) {
+        text += "目标：";
+        const goals = selectedDomain.goals;
         if (Array.isArray(goals)) {
           goals.forEach(goal => text += goal + "。");
         } else {
@@ -129,55 +129,40 @@ function Performance() {
         }
       }
       
-      if (selectedDomain.performance_points) {
+      if (selectedDomain.points) {
         text += "绩效要点：";
-        if (selectedDomain.performance_points.key_points) {
-          text += "关键点：";
-          const keyPoints = selectedDomain.performance_points.key_points;
-          if (Array.isArray(keyPoints)) {
-            keyPoints.forEach(point => text += point + "。");
-          } else {
-            text += keyPoints + "。";
-          }
-        }
-        if (selectedDomain.performance_points.purpose) {
-          text += "目的：";
-          const purposes = selectedDomain.performance_points.purpose;
-          if (Array.isArray(purposes)) {
-            purposes.forEach(p => text += p + "。");
-          } else {
-            text += purposes + "。";
-          }
-        }
-        if (selectedDomain.performance_points.function) {
-          text += "功能：";
-          const functions = selectedDomain.performance_points.function;
-          if (Array.isArray(functions)) {
-            functions.forEach(f => text += f + "。");
-          } else {
-            text += functions + "。";
-          }
+        const points = selectedDomain.points;
+        if (Array.isArray(points)) {
+          points.forEach(point => text += point + "。");
+        } else {
+          text += points + "。";
         }
       }
       
-      if (selectedDomain.relationship_with_other_domains) {
+      if (selectedDomain.relationships) {
         text += "与其他绩效域的关系：";
-        const relationships = selectedDomain.relationship_with_other_domains;
-        if (Array.isArray(relationships)) {
-          relationships.forEach(r => text += r + "。");
-        } else {
-          text += relationships + "。";
-        }
+        const relationships = selectedDomain.relationships;
+        Object.entries(relationships).forEach(([key, value]) => {
+          text += key + "：";
+          if (typeof value === 'string') {
+            text += value + "。";
+          } else if (Array.isArray(value)) {
+            value.forEach(v => text += v + "。");
+          }
+        });
       }
       
-      if (selectedDomain.inspection_methods) {
+      if (selectedDomain.inspections) {
         text += "检查方法：";
-        const methods = selectedDomain.inspection_methods;
-        if (Array.isArray(methods)) {
-          methods.forEach(m => text += m + "。");
-        } else {
-          text += methods + "。";
-        }
+        const inspections = selectedDomain.inspections;
+        Object.entries(inspections).forEach(([key, methods]) => {
+          text += key + "：";
+          if (Array.isArray(methods)) {
+            methods.forEach(m => text += m + "。");
+          } else {
+            text += methods + "。";
+          }
+        });
       }
     }
     
@@ -280,8 +265,8 @@ function Performance() {
             selectedKeys={selectedDomain ? [selectedDomain.domain_name] : []}
             onOpenChange={(keys) => setExpandedSection(keys)}
             items={performanceDomains.map((domain) => ({
-              key: domain.domain_name,
-              label: domain.domain_name,
+              key: domain.name,
+              label: domain.name,
               onClick: () => handleSelectDomain(domain, performanceDomains.indexOf(domain)),
             }))}
           />
@@ -299,7 +284,7 @@ function Performance() {
               <div slot="header" className="card-header">
                 <span className="space">&nbsp;</span>
                 <span className="title">
-                  {selectedDomain.domain_name}
+                  {selectedDomain.name}
                 </span>
                 <span className="switch">
                   <Switch
@@ -313,80 +298,73 @@ function Performance() {
               <table className="process-table" cellSpacing="0">
                 <tbody>
                   <tr>
-                    <th colSpan="2">定义</th>
+                    <th>定义</th>
                   </tr>
                   <tr>
-                    <td colSpan="2" className="text-indent">{selectedDomain.definition}</td>
+                    <td className="text-indent">{selectedDomain.definition}</td>
                   </tr>
 
                   {showDetails && (
                     <>
-                      {selectedDomain.expected_goals && (
+                      {selectedDomain.goals && (
                         <>
                           <tr>
-                            <th colSpan="2">预期目标</th>
+                            <th>目标</th>
                           </tr>
                           <tr>
-                            <td colSpan="2">
-                              {renderArrayItems(selectedDomain.expected_goals.specific_goals)}
+                            <td>
+                              {renderArrayItems(selectedDomain.goals)}
                             </td>
                           </tr>
                         </>
                       )}
 
-                      {selectedDomain.performance_points && (
+                      {selectedDomain.points && (
                         <>
                           <tr>
-                            <th colSpan="2">绩效要点</th>
+                            <th>绩效要点</th>
                           </tr>
                           <tr>
-                            <td colSpan="2">
-                              {selectedDomain.performance_points.key_points && (
-                                <div className="point-section">
-                                  <strong>关键点：</strong>
-                                  {renderArrayItems(performanceDomains.performance_points?.key_points || selectedDomain.performance_points.key_points)}
-                                </div>
-                              )}
-                              {selectedDomain.performance_points.purpose && (
-                                <div className="point-section">
-                                  <strong>目的：</strong>
-                                  {renderArrayItems(selectedDomain.performance_points.purpose)}
-                                </div>
-                              )}
-                              {selectedDomain.performance_points.function && (
-                                <div className="point-section">
-                                  <strong>功能：</strong>
-                                  {renderArrayItems(selectedDomain.performance_points.function)}
-                                </div>
-                              )}
+                            <td>
+                              {renderArrayItems(selectedDomain.points)}
                             </td>
                           </tr>
                         </>
                       )}
 
-                      {selectedDomain.relationship_with_other_domains && (
+                      {selectedDomain.relationships && (
                         <>
                           <tr>
-                            <th colSpan="2">与其他绩效域的关系</th>
+                            <th>与其他绩效域的关系</th>
                           </tr>
-                          <tr>
-                            <td colSpan="2">
-                              {renderArrayItems(selectedDomain.relationship_with_other_domains)}
-                            </td>
-                          </tr>
+                          {Object.entries(selectedDomain.relationships).map(([key, value], index) => (
+                            <tr key={index}>
+                              <td>
+                                <div className="point-section">
+                                  <strong>{key}：</strong>
+                                  {typeof value === 'string' ? value : renderArrayItems(value)}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
                         </>
                       )}
 
-                      {selectedDomain.inspection_methods && (
+                      {selectedDomain.inspections && (
                         <>
                           <tr>
-                            <th colSpan="2">检查方法</th>
+                            <th>检查方法</th>
                           </tr>
-                          <tr>
-                            <td colSpan="2">
-                              {renderArrayItems(selectedDomain.inspection_methods)}
-                            </td>
-                          </tr>
+                          {Object.entries(selectedDomain.inspections).map(([key, methods], index) => (
+                            <tr key={index}>
+                              <td>
+                                <div className="inspection-section">
+                                  <strong>{key}：</strong>
+                                  {renderArrayItems(methods)}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
                         </>
                       )}
                     </>
