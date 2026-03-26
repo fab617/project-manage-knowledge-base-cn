@@ -8,7 +8,7 @@ function replaceInPublic() {
   return {
     name: "replace-in-public",
     closeBundle() {
-      const basePath = process.env.VITE_BASE_PATH || "files/pm";
+      const basePath = process.env.VITE_BASE_PATH || "/";
       const public404 = resolve("public/404.html");
       const dist404 = resolve("dist/404.html");
 
@@ -22,8 +22,8 @@ function replaceInPublic() {
 }
 
 export default defineConfig(({ command, mode }) => {
-  const basePath = process.env.VITE_BASE_PATH || "files/pm";
-  const base = `/${basePath}/`;
+  const basePath = process.env.VITE_BASE_PATH || "/".replace(/\/+/g, "/");
+  const base = `/${basePath}/`.replace(/\/+/g, "/").replace(/\/+/g, "/");
 
   return {
     base,

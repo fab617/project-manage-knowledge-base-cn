@@ -17,7 +17,7 @@ function ScrollToTop() {
 
 const basePath = import.meta.env.VITE_BASE_PATH 
   ? `/${import.meta.env.VITE_BASE_PATH}/` 
-  : '/files/pm/';
+  : '';
 
 function LoadingWrapper({ children }) {
   const { loading } = useData()
