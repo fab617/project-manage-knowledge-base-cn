@@ -6,6 +6,14 @@
   <link rel="icon" type="image/svg+xml" href="/project-manage-knowledge-base-cn/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>项目管理理论</title>
+  <script>
+    // 处理 GitHub Pages 404 重定向
+    const redirect = sessionStorage.redirect;
+    delete sessionStorage.redirect;
+    if (redirect && redirect !== location.href) {
+      history.replaceState(null, null, redirect);
+    }
+  </script>
   <script type="module" crossorigin src="/project-manage-knowledge-base-cn/assets/index-xqQZWAud.js"></script>
   <link rel="stylesheet" crossorigin href="/project-manage-knowledge-base-cn/assets/index-DEZVUGfb.css">
 </head>
