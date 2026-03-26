@@ -15,6 +15,8 @@ function ScrollToTop() {
   return null
 }
 
+const basePath = import.meta.env.BASE_PATH || '/files/pm';
+
 function LoadingWrapper({ children }) {
   const { loading } = useData()
   
@@ -36,7 +38,7 @@ function LoadingWrapper({ children }) {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter basename="/files/pm/">
+    <BrowserRouter basename={basePath}>
       <ScrollToTop />
       <DataProvider>
         <LoadingWrapper>
