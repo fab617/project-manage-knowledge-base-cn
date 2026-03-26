@@ -15,7 +15,7 @@ function ScrollToTop() {
   return null
 }
 
-const basePath = import.meta.env.BASE_PATH || '/files/pm';
+const basePath = import.meta.env.BASE_PATH || '/';
 
 function LoadingWrapper({ children }) {
   const { loading } = useData()
